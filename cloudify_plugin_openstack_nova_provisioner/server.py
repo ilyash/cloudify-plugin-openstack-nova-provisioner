@@ -43,7 +43,7 @@ def create(ctx, nova_client, **kwargs):
     _maybe_transform_userdata(server)
 
     if ('management_network_name' in ctx.properties) and ctx.properties['management_network_name']:
-        nc = os_common.NeutronClient().get()
+        nc = os_common.NeutronClient().get(config=ctx.properties.get('neutron_config'))
         net_id = nc.cosmo_get_named('network', ctx.properties['management_network_name'])['id']
         server['nics'] = [{'net-id': net_id}]
     # print(server['nics'])
