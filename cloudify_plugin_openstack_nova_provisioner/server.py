@@ -63,6 +63,9 @@ def create(ctx, nova_client, **kwargs):
     if 'image_name' in server:
         server['image'] = nova_client.images.find(name=server['image_name']).id
         del server['image_name']
+    if 'flavor_name' in server:
+        server['flavor'] = nova_client.flavors.find(name=server['flavor_name']).id
+        del server['flavor_name']
 
     _fail_on_missing_required_parameters(
         server,
