@@ -11,9 +11,12 @@ setuptools.setup(
     license='LICENSE',
     description='Plugin for provisioning OpenStack Nova',
     install_requires=[
-        "bernhard",
-        "celery",
+        "cosmo-plugin-openstack-common",
         "python-novaclient" # for novaclient.exceptions.nova_exceptions
+    ],
+    dependency_links=[
+        "https://github.com/ilyash/cosmo-plugin-openstack-common/tarball/" \
+        "master#egg=cosmo-plugin-openstack-common-{1}"
     ]
 )
 

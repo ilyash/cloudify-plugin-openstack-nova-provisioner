@@ -1,5 +1,9 @@
 # vim: ts=4 sw=4 et
 
+# TODO: in create(), use currently non-existing API to detect
+#       relation types, do not filter by
+#       cosmo_is_network/cosmo_is_port
+
 import copy
 import inspect
 import itertools
@@ -33,7 +37,14 @@ def create(ctx, nova_client, **kwargs):
     """
 
     # For possible changes by _maybe_transform_userdata()
-    server = copy.deepcopy(ctx.properties['server'])
+
+    server = {
+        'name': ctx.node_id
+    }
+    server.update(copy.deepcopy(ctx.properties['server']))
+
+    ctx.logger.debug(
+        "server.create() server before transformations: {0}".format(server))
 
     if server.get('nics'):
         raise ValueError("Parameter with name 'nics' must not be passed to"
@@ -58,6 +69,36 @@ def create(ctx, nova_client, **kwargs):
         ('name', 'flavor', 'image', 'key_name'),
         'server')
 
+    # Multi-NIC by networks - start
+    network_nodes_runtime_properties = ctx.capabilities.get_all().values()
+    if network_nodes_runtime_properties and 'management_network_name' not in ctx.properties:
+        # Known limitation
+        raise RuntimeError("Nova server with multi-NIC requires 'management_network_name' which was not supplied")
+    nics = [
+        {'net-id': n['external_id']}
+        for n in network_nodes_runtime_properties
+        if neutron_client.cosmo_is_network(n['external_id'])
+    ]
+    if nics:
+        server['nics'] = server.get('nics', []) + nics
+    # Multi-NIC by networks - end
+
+    # Multi-NIC by ports - start
+    port_nodes_runtime_properties = ctx.capabilities.get_all().values()
+    if port_nodes_runtime_properties and 'management_network_name' not in ctx.properties:
+        # Known limitation
+        raise RuntimeError("Nova server with multi-NIC requires 'management_network_name' which was not supplied")
+    nics = [
+        {'port-id': n['external_id']}
+        for n in port_nodes_runtime_properties
+        if neutron_client.cosmo_is_port(n['external_id'])
+    ]
+    if nics:
+        server['nics'] = server.get('nics', []) + nics
+    # Multi-NIC by ports - end
+
+    ctx.logger.debug(
+        "server.create() server after transformations: {0}".format(server))
 
     # First parameter is 'self', skipping
     params_names = inspect.getargspec(nova_client.servers.create).args[1:]
@@ -97,6 +138,7 @@ def create(ctx, nova_client, **kwargs):
                 "can be connected to."
             )
         raise RuntimeError("Nova bad request error: " + str(e))
+    os.system("nova show " + s.id)
     ctx['external_id'] = s.id
 
 @operation
@@ -133,6 +175,12 @@ def start_monitor(ctx):
     ctx.logger.info('starting openstack monitoring [cmd=%s]', command)
     subprocess.Popen(command)
 
+
+@with_nova_client
+def delete(ctx, nova_client, **kwargs):
+    server = nova_client.servers.find(id=ctx.runtime_properties['external_id'])
+    server.delete()
+    ctx.set_stopped()
 
 def _fail_on_missing_required_parameters(obj, required_parameters, hint_where):
     for k in required_parameters:
