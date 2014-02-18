@@ -22,13 +22,14 @@ import logging
 
 import bernhard
 
-from cloudify.notifications import send_event
+from cloudify.manager import set_node_started, set_node_stopped
 import cosmo_plugin_openstack_common as os_common
 
 class Reporter(object):
 
-    def report(self, host, node_id, k, v):
-        send_event(host, node_id, k, v)
+    def __init__(self, start, stop):
+        self.start = start
+        self.stop = stop
 
 class OpenstackStatusMonitor(object):
 
@@ -56,10 +57,10 @@ class OpenstackStatusMonitor(object):
 
     def report_server(self, server, time):
         if server.status == 'ACTIVE':
-            state = 'running'
+            method = 'start'
         else:
-            state = 'not running'
-        self.reporter.report(server.id, server.metadata.get('cloudify_id'), 'state', state)
+            method = 'stop'
+        getattr(self.reporter, method)(server.metadata.get('cloudify_id'), server.id)
 
     def stop(self):
         sys.stdout.write("Trying to shutdown monitor process")
@@ -101,7 +102,7 @@ def main():
     print("Args: {0}".format(args))
     if args.pid_file:
         write_pid_file(args.pid_file)
-    reporter = Reporter()
+    reporter = Reporter(set_node_started, set_node_stopped)
     monitor = OpenstackStatusMonitor(reporter, args)
 
     def handle(signum, frame):

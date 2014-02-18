@@ -1,6 +1,9 @@
 __author__ = 'elip'
 
 import setuptools
+
+# TODO: test_requires
+
 setuptools.setup(
     zip_safe=True,
     name='cloudify-plugin-openstack-nova-provisioner',
