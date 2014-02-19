@@ -180,7 +180,7 @@ def stop(ctx, nova_client, **kwargs):
     # workaround - start
     set_node_stopped(ctx.node_id, 'server-' + str(server.id))
     # workaround - stop
-    ctx.set_stopped()
+    # ctx.set_stopped()
 
 def start_monitor(ctx):
     command = [
@@ -198,7 +198,7 @@ def delete(ctx, nova_client, **kwargs):
     # workaround - start
     set_node_stopped(ctx.node_id, 'server-' + str(server.id))
     # workaround - stop
-    ctx.set_stopped()
+    # ctx.set_stopped()
 
 def _fail_on_missing_required_parameters(obj, required_parameters, hint_where):
     for k in required_parameters:
