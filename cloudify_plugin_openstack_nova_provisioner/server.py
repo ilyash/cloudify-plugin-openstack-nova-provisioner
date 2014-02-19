@@ -185,7 +185,7 @@ def start_monitor(ctx):
     ctx.logger.info('starting openstack monitoring [cmd=%s]', command)
     subprocess.Popen(command)
 
-
+@operation
 @with_nova_client
 def delete(ctx, nova_client, **kwargs):
     server = nova_client.servers.find(id=ctx.runtime_properties['external_id'])
