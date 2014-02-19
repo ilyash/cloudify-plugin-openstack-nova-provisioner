@@ -69,7 +69,7 @@ class OpenstackStatusMonitor(object):
                 node_state = get_node_state(node_id)
 
                 # TODO: use net_ips[*], not net_ips[0]
-                if not getattr(node_state, 'ip'):
+                if 'ip' not in node_state:
                     all_ips = []
                     for net_name, net_ips in server.networks.items():
                         if net_name == management_network_name:
