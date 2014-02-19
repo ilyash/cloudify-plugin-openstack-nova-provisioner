@@ -19,6 +19,7 @@ import sys
 import signal
 import os
 import logging
+import syslog
 
 from cloudify.manager import set_node_started, set_node_stopped
 from cloudify.manager import get_node_state, update_node_state
@@ -61,26 +62,30 @@ class OpenstackStatusMonitor(object):
             return
 
         if server.status == 'ACTIVE':
+            syslog.syslog('monitor.py - ACTIVE')
             method = 'start'
 
             management_network_name = server.metadata.get('cloudify_management_network_name')
             # management_network_name should be there but just in case...
             if management_network_name:
+                syslog.syslog('monitor.py - management_network_name')
                 node_state = get_node_state(node_id)
 
                 # TODO: use net_ips[*], not net_ips[0]
-                if 'ip' not in node_state:
+                if 'ips' not in node_state:
+                    syslog.syslog('monitor.py - ips not in node_state')
                     all_ips = []
                     for net_name, net_ips in server.networks.items():
                         if net_name == management_network_name:
-                            node_state['ip'] = net_ips[0]
+                            # node_state['ip'] = net_ips[0]
+                            pass
                         else:
                             all_ips.append((net_name, net_ips[0]))
                     node_state['ips'] = all_ips
                     update_node_state(node_state)
         else:
             method = 'stop'
-            getattr(self.reporter, method)(node_id, 'server-' + str(server.id))
+        getattr(self.reporter, method)(node_id, 'server-' + str(server.id))
 
     def stop(self):
         sys.stdout.write("Trying to shutdown monitor process")
