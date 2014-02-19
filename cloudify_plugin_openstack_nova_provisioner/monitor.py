@@ -20,8 +20,6 @@ import signal
 import os
 import logging
 
-import bernhard
-
 from cloudify.manager import set_node_started, set_node_stopped
 import cosmo_plugin_openstack_common as os_common
 
