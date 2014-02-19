@@ -194,9 +194,10 @@ def start_monitor(ctx):
 @with_nova_client
 def delete(ctx, nova_client, **kwargs):
     server = nova_client.servers.find(id=ctx.runtime_properties['external_id'])
+    id = server.id
     server.delete()
     # workaround - start
-    set_node_stopped(ctx.node_id, 'server-' + str(server.id))
+    set_node_stopped(ctx.node_id, 'server-' + str(id))
     # workaround - stop
     # ctx.set_stopped()
 
