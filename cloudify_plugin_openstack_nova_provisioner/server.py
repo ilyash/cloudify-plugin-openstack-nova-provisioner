@@ -10,6 +10,7 @@ import itertools
 import os
 import subprocess
 import sys
+import time
 
 from novaclient import exceptions as nova_exceptions
 
@@ -21,6 +22,7 @@ import cosmo_plugin_openstack_common as os_common
 with_nova_client = os_common.with_nova_client
 
 MUST_SPECIFY_NETWORK_EXCEPTION_TEXT = 'Multiple possible networks found'
+SERVER_DELETE_CHECK_SLEEP = 2
 
 @operation
 @with_nova_client
@@ -179,8 +181,8 @@ def stop(ctx, nova_client, **kwargs):
     server.stop()
     # workaround - start
     set_node_stopped(ctx.node_id, 'server-' + str(server.id))
-    # workaround - stop
     # ctx.set_stopped()
+    # workaround - stop
 
 def start_monitor(ctx):
     command = [
@@ -196,10 +198,16 @@ def delete(ctx, nova_client, **kwargs):
     server = nova_client.servers.find(id=ctx.runtime_properties['external_id'])
     id = server.id
     server.delete()
+    # Wait here or monitor will report "started" _after_ we report "stopped"
+    while True:
+        servers = list(nova_client.servers.findall(id=ctx.runtime_properties['external_id']))
+        time.sleep(SERVER_DELETE_CHECK_SLEEP)  # final sleep is intentional
+        if len(servers) == 0:
+            break
     # workaround - start
     set_node_stopped(ctx.node_id, 'server-' + str(id))
-    # workaround - stop
     # ctx.set_stopped()
+    # workaround - stop
 
 def _fail_on_missing_required_parameters(obj, required_parameters, hint_where):
     for k in required_parameters:
