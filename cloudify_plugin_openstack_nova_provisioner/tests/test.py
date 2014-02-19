@@ -20,11 +20,14 @@ tests_config = os_common.TestsConfig().get()
 # will be done differently, probably as a (celery) task
 class MockReporter(object):
     state = {}
+
     def start(self, node_id, _host):
         self.__class__.state[node_id] = 'started'
+
     def stop(self, node_id, _host):
         self.__class__.state[node_id] = 'stopped'
-    
+
+
 def _mock_start_monitor(ctx):
     reporter = MockReporter(ctx)
     args = argparse.Namespace(monitor_interval=3,
@@ -34,7 +37,7 @@ def _mock_start_monitor(ctx):
 
 cfy_srv.start_monitor = _mock_start_monitor
 # WIP - end
-    
+
 
 class OpenstackNovaTest(os_common.TestCase):
 
@@ -92,11 +95,12 @@ class OpenstackNovaTest(os_common.TestCase):
         management_network = self.create_network('mng')
 
         networks = self._create_networks()
-        ports = [self.create_port('port_' + str(i), n) for i, n in enumerate(networks)]
+        ports = [self.create_port('port_' + str(i), n)
+                 for i, n in enumerate(networks)]
 
         related = {}
         for i, port in enumerate(ports):
-            related['related_port_' + str(i)] = { 'external_id': port['id'] }
+            related['related_port_' + str(i)] = {'external_id': port['id']}
 
         ctx = MockCloudifyContext(
             node_id='__cloudify_id_' + name,
@@ -117,9 +121,6 @@ class OpenstackNovaTest(os_common.TestCase):
         self.assertThereIsOneServer(name=name)
 
 
-        
-
 if __name__ == '__main__':
     unittest.main()
     # _mock_start_monitor(object())
-
