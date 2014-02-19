@@ -59,8 +59,10 @@ def create(ctx, nova_client, **kwargs):
 
     if ('management_network_name' in ctx.properties) and ctx.properties['management_network_name']:
         nc = os_common.NeutronClient().get(config=ctx.properties.get('neutron_config'))
-        net_id = nc.cosmo_get_named('network', ctx.properties['management_network_name'])['id']
-        server['nics'] = [{'net-id': net_id}]
+        managemenet_network_id = nc.cosmo_get_named('network', ctx.properties['management_network_name'])['id']
+        server['nics'] = [{'net-id': managemenet_network_id}]
+    else
+        managemenet_network_id = None
     # print(server['nics'])
 
     # Sugar
@@ -128,6 +130,8 @@ def create(ctx, nova_client, **kwargs):
     if not params['meta']:
         params['meta'] = dict({})
     params['meta']['cloudify_id'] = ctx.node_id
+    params['meta']['cloudify_management_network_id'] = managemenet_network_id
+    params['meta']['cloudify_management_network_name'] = ctx.properties.get('management_network_name')
 
     ctx.logger.info("Asking Nova to create server."
                 "Parameters: {0}".format(str(params)))

@@ -21,6 +21,7 @@ import os
 import logging
 
 from cloudify.manager import set_node_started, set_node_stopped
+from cloudify.manager import get_node_state, update_node_state
 import cosmo_plugin_openstack_common as os_common
 
 class Reporter(object):
@@ -54,12 +55,31 @@ class OpenstackStatusMonitor(object):
             self.report_server(server, now)
 
     def report_server(self, server, time):
+        node_id = server.metadata.get('cloudify_id')
+        if not node_id:
+            # Non-cloudify-managed node
+            return
+
         if server.status == 'ACTIVE':
             method = 'start'
+
+            management_network_name = server.metadata.get('cloudify_management_network_name')
+            # management_network_name should be there but just in case...
+            if management_network_name:
+                node_state = get_node_state(node_id)
+
+                # TODO: use net_ips[*], not net_ips[0]
+                if not getattr(node_state, 'ip'):
+                    all_ips = []
+                    for net_name, net_ips in server.networks.items():
+                        if net_name == management_network_name:
+                            node_state['ip'] = net_ips[0]
+                        else:
+                            all_ips.append((net_name, net_ips[0]))
+                    node_state['ips'] = all_ips
+                    update_node_state(node_state)
         else:
             method = 'stop'
-        node_id = server.metadata.get('cloudify_id')
-        if node_id:
             getattr(self.reporter, method)(node_id, 'server-' + str(server.id))
 
     def stop(self):
