@@ -62,7 +62,7 @@ class OpenstackStatusMonitor(object):
             method = 'stop'
         node_id = server.metadata.get('cloudify_id')
         if node_id:
-            getattr(self.reporter, method)(node_id, server.id)
+            getattr(self.reporter, method)(node_id, 'server-' + str(server.id))
 
     def stop(self):
         sys.stdout.write("Trying to shutdown monitor process")
