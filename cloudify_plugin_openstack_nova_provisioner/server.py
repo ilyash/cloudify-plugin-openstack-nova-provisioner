@@ -14,6 +14,8 @@ import sys
 from novaclient import exceptions as nova_exceptions
 
 from cloudify.decorators import operation
+from cloudify.manager import set_node_stopped
+
 import cosmo_plugin_openstack_common as os_common
 
 with_nova_client = os_common.with_nova_client
@@ -175,6 +177,9 @@ def start(ctx, nova_client, **kwargs):
 def stop(ctx, nova_client, **kwargs):
     server = nova_client.servers.get(ctx.runtime_properties['external_id'])
     server.stop()
+    # workaround - start
+    set_node_stopped(ctx.node_id, 'server-' + str(server.id))
+    # workaround - stop
     ctx.set_stopped()
 
 def start_monitor(ctx):
@@ -190,6 +195,9 @@ def start_monitor(ctx):
 def delete(ctx, nova_client, **kwargs):
     server = nova_client.servers.find(id=ctx.runtime_properties['external_id'])
     server.delete()
+    # workaround - start
+    set_node_stopped(ctx.node_id, 'server-' + str(server.id))
+    # workaround - stop
     ctx.set_stopped()
 
 def _fail_on_missing_required_parameters(obj, required_parameters, hint_where):
