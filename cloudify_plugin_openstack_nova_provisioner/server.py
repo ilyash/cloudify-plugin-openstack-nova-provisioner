@@ -170,6 +170,13 @@ def start(ctx, nova_client, **kwargs):
     raise ValueError("openstack_host_provisioner: Can not start() "
                      "server in state {0}".format(server.status))
 
+@operation
+@with_nova_client
+def stop(ctx, nova_client, **kwargs):
+    server = nova_client.servers.get(ctx.runtime_properties['external_id'])
+    server.stop()
+    ctx.set_stopped()
+
 def start_monitor(ctx):
     command = [
         sys.executable,
