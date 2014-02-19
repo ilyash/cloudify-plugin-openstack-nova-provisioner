@@ -77,8 +77,7 @@ class OpenstackStatusMonitor(object):
                     all_ips = []
                     for net_name, net_ips in server.networks.items():
                         if net_name == management_network_name:
-                            # node_state['ip'] = net_ips[0]
-                            pass
+                            node_state['management_ip'] = net_ips[0]
                         else:
                             all_ips.append((net_name, net_ips[0]))
                     node_state['ips'] = all_ips
