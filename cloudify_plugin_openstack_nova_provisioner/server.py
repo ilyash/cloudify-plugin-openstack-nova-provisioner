@@ -141,7 +141,7 @@ def create(ctx, nova_client, **kwargs):
                 "can be connected to."
             )
         raise RuntimeError("Nova bad request error: " + str(e))
-    os.system("nova show " + s.id)
+    # os.system("nova show " + s.id)
     ctx['external_id'] = s.id
 
 @operation
