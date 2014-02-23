@@ -75,7 +75,6 @@ class OpenstackNovaTest(os_common.TestCase):
         # WIP # cfy_srv.stop(ctx)
 
         # Test: delete
-        # Usually fails here because it takes some time to delete the server
         cfy_srv.delete(ctx)
 
         wait = DELETE_WAIT_START
