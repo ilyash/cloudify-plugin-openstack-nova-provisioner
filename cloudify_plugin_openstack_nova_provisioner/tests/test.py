@@ -2,9 +2,9 @@
 # vim: ts=4 sw=4 et
 
 import argparse
+import time
 import unittest
 
-from cloudify.context import ContextCapabilities
 from cloudify.mocks import MockCloudifyContext
 
 import cosmo_plugin_openstack_common as os_common
@@ -13,6 +13,10 @@ import cloudify_plugin_openstack_nova_provisioner.server as cfy_srv
 import cloudify_plugin_openstack_nova_provisioner.monitor as cfy_srv_mon
 
 tests_config = os_common.TestsConfig().get()
+
+DELETE_WAIT_START = 1
+DELETE_WAIT_FACTOR = 2
+DELETE_WAIT_COUNT = 6
 
 
 # WIP - start
@@ -51,7 +55,6 @@ class OpenstackNovaTest(os_common.TestCase):
             properties={
                 'server': {
                     'name': name,
-                    # 'image': nova_client.images.find(name=tests_config['image_name']).id,
                     'image_name': tests_config['image_name'],
                     'flavor': tests_config['flavor_id'],
                     'key_name': tests_config['key_name'],
@@ -74,6 +77,19 @@ class OpenstackNovaTest(os_common.TestCase):
         # Test: delete
         # Usually fails here because it takes some time to delete the server
         cfy_srv.delete(ctx)
+
+        wait = DELETE_WAIT_START
+        for attempt in range(1, DELETE_WAIT_COUNT + 1):
+            servers = nova_client.servers.findall(name=name)
+            if len(servers) == 0:
+                break
+            self.logger.debug(
+                "Waiting for server {0} to disappear after deletion. "
+                "Attempt #{1}, sleeping for {2} seconds".format(
+                    name, attempt, wait))
+            time.sleep(wait)
+            wait *= DELETE_WAIT_FACTOR
+
         self.assertThereIsNoServer(name=name)
 
     @unittest.skip("Not implemented yet")
@@ -107,7 +123,6 @@ class OpenstackNovaTest(os_common.TestCase):
             properties={
                 'server': {
                     'name': name,
-                    # 'image': nova_client.images.find(name=tests_config['image_name']).id,
                     'image_name': tests_config['image_name'],
                     'flavor': tests_config['flavor_id'],
                     'key_name': tests_config['key_name'],
